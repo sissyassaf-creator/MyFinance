@@ -1,0 +1,12 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "myfinance"
+version = "1.0.0"
+description = "הכספים שלך, במחשב שלך — Local household finance tracker"
+requires-python = ">=3.11"
+
+[project.scripts]
+myfinance = "myfinance.cli:main"

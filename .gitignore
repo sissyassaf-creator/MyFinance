@@ -1,4 +1,29 @@
+# Environment
 .env
+venv/
+.venv/
+
+# Python
 __pycache__/
 *.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Data (local only)
+data/*.db
+backups/*.db
+exports/*.xlsx
+input/**/*.csv
+input/**/*.xlsx
+input/**/*.xls
+
+# OS
 .DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
