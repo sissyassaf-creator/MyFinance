@@ -2,13 +2,26 @@
 
 ## 2026-03-25
 
+### Session 1 — Project Initialization
 - Created project directory at `~/claude-code/MyFinance/`
 - Initialized git repo with .gitignore
-- Created all documentation files: DESIGN.md, ARCHITECTURE.md, TOOLCHAIN.md, TASKS.md, PROGRESS.md
-- Reviewed product summary from prior Claude Chat session covering:
-  - 4 Israeli financial sources (Bank Mizrahi, Visa Mizrahi, Diners El Al, Max)
-  - 6-stage processing pipeline (detect → extract → dedup → categorize → savings → export)
-  - 15 Hebrew categories, transaction data model, 5 savings detection rules
-  - 5-tab Streamlit dashboard with Hebrew RTL
-  - Tech stack: Python 3.11, Streamlit, pandas, anthropic, pdfplumber, pdf2image, etc.
-- **Waiting for additional inputs from user before starting implementation**
+- Created initial documentation files
+- Wrote PRODUCT_DEFINITION.md covering v1 through v4
+
+### Session 2 — v1 Architecture Design
+- Rewrote ARCHITECTURE.md with complete v1 technical architecture covering:
+  - Project file structure (every file and folder)
+  - Module architecture with dependency graph
+  - Data flow diagram (file drop → dashboard)
+  - SQLite schema (3 tables with exact CREATE TABLE statements)
+  - Parser interface (BaseParser ABC + VisaParser + MaxParser)
+  - Categorization module (Claude API batching, merchant cache, prompt design)
+  - Dashboard layout (Dash + DMC + ag-grid, 2 tabs, component hierarchy)
+  - Configuration split (.env vs config.py)
+  - CLI entry points (process, dashboard, export)
+  - Error handling matrix (15 error types with handling strategy)
+  - Testing strategy (unit + integration, sample data approach)
+- Updated DESIGN.md, TOOLCHAIN.md, TASKS.md to align with v1 scope
+- Key decisions documented: batch by unique merchant, conservative normalization,
+  synchronous dashboard refresh, SQLite with ISO date strings
+- **Next step:** Create requirements.txt and package skeleton, then start Phase 2 (db.py + config.py)

@@ -8,19 +8,18 @@
 
 | Library | Purpose |
 |---------|---------|
-| streamlit | Dashboard UI (Hebrew, RTL) |
+| dash | Dashboard framework |
+| dash-mantine-components | RTL-native UI components |
+| dash-ag-grid | High-performance data table with inline editing |
+| plotly | Charts (pie, bar) |
 | pandas | Data manipulation, CSV/Excel reading |
 | openpyxl | Excel export |
-| anthropic | Claude API for document parsing and categorization |
-| Pillow | Image handling |
-| pdfplumber | Text-based PDF extraction |
-| pdf2image | Convert scanned PDF pages to images for Claude Vision |
+| anthropic | Claude API for categorization |
+| python-dotenv | Load .env file |
 
 ## System Dependencies
 
-- **Poppler**: Required by pdf2image for PDF-to-image conversion (free, open source)
-  - macOS: `brew install poppler`
-  - Ubuntu: `apt-get install poppler-utils`
+- **None** — v1 uses CSV/Excel only (no Poppler, no OCR)
 
 ## Environment Setup
 
@@ -29,6 +28,8 @@ cd ~/claude-code/MyFinance
 python3.11 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
+cp .env.example .env
+# Edit .env and add your ANTHROPIC_API_KEY
 ```
 
 ## Environment Variables
@@ -39,21 +40,24 @@ pip install -r requirements.txt
 
 Set in `.env` file (gitignored):
 ```
-ANTHROPIC_API_KEY=sk-ant-...
+ANTHROPIC_API_KEY=sk-ant-api03-...
 ```
 
 ## Running
 
 ```bash
-# Process new documents
-python main.py process
+# Process new files
+python -m myfinance.cli process
 
 # Launch dashboard
-streamlit run dashboard.py
+python -m myfinance.cli dashboard
+
+# Export to Excel
+python -m myfinance.cli export --month 2026-03
 ```
 
 ## Cost
 
 - All Python libraries: free, open source
-- Poppler: free, open source
-- Anthropic API: pay per use, estimated under $0.50 per monthly run
+- No system dependencies
+- Anthropic API: ~1-3 ILS/month (Sonnet model, merchant cache minimizes calls)
