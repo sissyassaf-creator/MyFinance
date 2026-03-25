@@ -82,7 +82,10 @@ def categorize_transactions(transactions: list[dict], db_conn, skip_api: bool = 
     # Call Claude API for uncached merchants
     api_results = {}
     if uncached and not skip_api:
-        api_results = _categorize_via_api(uncached)
+        if not _confirm_api_usage(uncached):
+            skip_api = True
+        else:
+            api_results = _categorize_via_api(uncached)
         # Save new mappings to cache
         for merchant, category in api_results.items():
             upsert_merchant_map(db_conn, merchant, category, confirmed_by='api')
@@ -99,6 +102,33 @@ def categorize_transactions(transactions: list[dict], db_conn, skip_api: bool = 
         txn['needs_review'] = 1 if category == UNRECOGNIZED_CATEGORY else 0
 
     return transactions
+
+
+_api_confirmed = False
+
+
+def _confirm_api_usage(merchants: list[str]) -> bool:
+    """Ask user for confirmation before first API call in this session."""
+    global _api_confirmed
+    if _api_confirmed:
+        return True
+
+    print(f"\n{'=' * 50}")
+    print(f"  Claude API — אישור שימוש")
+    print(f"  {len(merchants)} בתי עסק חדשים לסיווג")
+    print(f"  המידע שיישלח: שמות בתי עסק בלבד (ללא מספרי חשבון)")
+    print(f"  עלות משוערת: ~$0.01-0.05")
+    print(f"{'=' * 50}")
+
+    try:
+        answer = input("  לשלוח לסיווג? (k/l - כן/לא): ").strip().lower()
+    except (EOFError, KeyboardInterrupt):
+        return False
+
+    if answer in ('k', 'כ', 'y', 'yes', 'כן'):
+        _api_confirmed = True
+        return True
+    return False
 
 
 def _categorize_via_api(merchants: list[str]) -> dict[str, str]:
