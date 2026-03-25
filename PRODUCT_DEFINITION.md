@@ -50,16 +50,20 @@ the basic flow: import → see transactions → understand where money goes.
 
 ## Sources (v1)
 
-| Source | Type | Folder |
-|--------|------|--------|
-| Visa Mizrahi Tefahot | Credit Card | `input/visa-mizrahi/` |
-| Max | Credit Card | `input/max/` |
+| Source | Type | Folder | Format |
+|--------|------|--------|--------|
+| Visa Mizrahi Tefahot | Credit Card | `input/visa-mizrahi/` | CSV/Excel |
+| Diners El Al | Credit Card (Visa) | `input/diners-el-al/` | Same format as Visa Mizrahi |
+| Max | Credit Card | `input/max/` | CSV/Excel |
 
 **Input formats (v1):** Excel/CSV only (most reliable, no OCR issues)
 
-Bank statements and PDF parsing deferred to v2 — credit card statements give
-the richest transaction-level data and are available as Excel/CSV downloads
-from max.co.il and cal-online.co.il.
+Diners El Al uses the same Visa format as Visa Mizrahi — same parser, different
+source label. Only 2 parsers needed: one for Visa (covers both Visa Mizrahi and
+Diners), one for Max.
+
+Bank statements deferred to v2 (PDF-based, mixes income/expenses, shows credit
+card charges as lump sums — fundamentally different complexity).
 
 ## Processing Pipeline (v1)
 
