@@ -1,88 +1,76 @@
 """Tab 1: סקירה כללית — Monthly overview with charts and stats."""
 
-import dash_mantine_components as dmc
 from dash import dcc, html
 
 
 def overview_layout():
-    return dmc.Stack(
-        gap="lg",
-        p="md",
+    return html.Div([
+        # Stats cards
+        html.Div(
+            style={"display": "flex", "gap": "16px", "marginBottom": "24px"},
+            children=[
+                _stat_card("סה״כ הוצאות", "₪0", "stat-total-spend"),
+                _stat_card("עסקאות", "0", "stat-txn-count"),
+                _stat_card("ממתינים לבדיקה", "0", "stat-pending-count"),
+            ],
+        ),
+
+        # Charts row
+        html.Div(
+            style={"display": "flex", "gap": "16px", "marginBottom": "24px"},
+            children=[
+                html.Div(
+                    style={"flex": "1", "backgroundColor": "white", "borderRadius": "8px",
+                           "padding": "16px", "boxShadow": "0 1px 3px rgba(0,0,0,0.1)"},
+                    children=[
+                        html.H4("התפלגות לפי קטגוריה", style={"margin": "0 0 8px 0"}),
+                        dcc.Graph(id="pie-chart", config={"displayModeBar": False},
+                                  style={"height": "350px"}),
+                    ],
+                ),
+                html.Div(
+                    style={"flex": "1", "backgroundColor": "white", "borderRadius": "8px",
+                           "padding": "16px", "boxShadow": "0 1px 3px rgba(0,0,0,0.1)"},
+                    children=[
+                        html.H4("הוצאות לפי קטגוריה", style={"margin": "0 0 8px 0"}),
+                        dcc.Graph(id="bar-chart", config={"displayModeBar": False},
+                                  style={"height": "350px"}),
+                    ],
+                ),
+            ],
+        ),
+
+        # Top merchants
+        html.Div(
+            style={"backgroundColor": "white", "borderRadius": "8px", "padding": "16px",
+                   "boxShadow": "0 1px 3px rgba(0,0,0,0.1)", "marginBottom": "24px"},
+            children=[
+                html.H4("5 בתי עסק מובילים", style={"margin": "0 0 12px 0"}),
+                html.Div(id="top-merchants-table"),
+            ],
+        ),
+
+        # Savings alerts
+        html.Div(
+            id="savings-alerts-container",
+            style={"backgroundColor": "white", "borderRadius": "8px", "padding": "16px",
+                   "boxShadow": "0 1px 3px rgba(0,0,0,0.1)"},
+            children=[
+                html.H4("הצעות חיסכון", style={"margin": "0 0 12px 0"}),
+                html.Div(id="savings-alerts"),
+            ],
+        ),
+    ])
+
+
+def _stat_card(label, value, card_id):
+    return html.Div(
+        style={
+            "flex": "1", "backgroundColor": "white", "borderRadius": "8px",
+            "padding": "16px", "boxShadow": "0 1px 3px rgba(0,0,0,0.1)",
+        },
         children=[
-            # Stats cards row
-            dmc.Group(
-                gap="md",
-                id="overview-stats-group",
-                children=[
-                    _stat_card("סה״כ הוצאות", "₪0", "stat-total-spend", "blue"),
-                    _stat_card("עסקאות", "0", "stat-txn-count", "teal"),
-                    _stat_card("ממתינים לבדיקה", "0", "stat-pending-count", "red"),
-                ],
-            ),
-
-            # Charts row
-            dmc.Grid(
-                children=[
-                    dmc.GridCol(
-                        span=6,
-                        children=[
-                            dmc.Paper(
-                                p="md",
-                                shadow="sm",
-                                children=[
-                                    dmc.Text("התפלגות לפי קטגוריה", fw=700, mb="sm"),
-                                    dcc.Graph(id="pie-chart", config={"displayModeBar": False}),
-                                ],
-                            ),
-                        ],
-                    ),
-                    dmc.GridCol(
-                        span=6,
-                        children=[
-                            dmc.Paper(
-                                p="md",
-                                shadow="sm",
-                                children=[
-                                    dmc.Text("הוצאות לפי קטגוריה", fw=700, mb="sm"),
-                                    dcc.Graph(id="bar-chart", config={"displayModeBar": False}),
-                                ],
-                            ),
-                        ],
-                    ),
-                ],
-            ),
-
-            # Top merchants
-            dmc.Paper(
-                p="md",
-                shadow="sm",
-                children=[
-                    dmc.Text("5 בתי עסק מובילים", fw=700, mb="sm"),
-                    html.Div(id="top-merchants-table"),
-                ],
-            ),
-
-            # Savings alerts
-            dmc.Paper(
-                p="md",
-                shadow="sm",
-                id="savings-alerts-container",
-                children=[
-                    dmc.Text("הצעות חיסכון", fw=700, mb="sm"),
-                    html.Div(id="savings-alerts"),
-                ],
-            ),
-        ],
-    )
-
-
-def _stat_card(label: str, value: str, card_id: str, color: str):
-    return dmc.Paper(
-        p="md",
-        shadow="sm",
-        style={"flex": 1, "minWidth": 150},
-        children=[
-            dmc.Text(label, size="sm", c="dimmed"),
-            dmc.Text(value, size="xl", fw=700, id=card_id),
+            html.P(label, style={"color": "#888", "fontSize": "14px", "margin": "0 0 4px 0"}),
+            html.P(value, id=card_id, style={"fontSize": "24px", "fontWeight": "bold", "margin": "0"}),
         ],
     )

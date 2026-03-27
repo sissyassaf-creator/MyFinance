@@ -1,101 +1,110 @@
 """Tab 2: פירוט עסקאות — Transaction table with filters and inline editing."""
 
 import dash_ag_grid as dag
-import dash_mantine_components as dmc
-from dash import html
+from dash import html, dcc
 
 from myfinance.config import CATEGORIES, SOURCES
 
 
 def transactions_layout():
-    return dmc.Stack(
-        gap="md",
-        p="md",
-        children=[
-            # Filter bar
-            dmc.Paper(
-                p="md",
-                shadow="sm",
-                children=[
-                    dmc.Text("מסננים", fw=700, mb="sm"),
-                    dmc.Group(
-                        gap="md",
-                        children=[
-                            dmc.Select(
+    return html.Div([
+        # Filter bar
+        html.Div(
+            style={
+                "backgroundColor": "white", "borderRadius": "8px", "padding": "16px",
+                "boxShadow": "0 1px 3px rgba(0,0,0,0.1)", "marginBottom": "16px",
+            },
+            children=[
+                html.H4("מסננים", style={"margin": "0 0 12px 0"}),
+                html.Div(
+                    style={"display": "flex", "gap": "12px", "alignItems": "flex-end", "flexWrap": "wrap"},
+                    children=[
+                        html.Div([
+                            html.Label("חודש", style={"fontSize": "13px", "display": "block", "marginBottom": "4px"}),
+                            dcc.Dropdown(
                                 id="filter-month",
-                                label="חודש",
                                 placeholder="כל החודשים",
                                 clearable=True,
-                                data=[],  # Populated by callback
-                                style={"width": 150},
+                                style={"width": "150px"},
                             ),
-                            dmc.MultiSelect(
+                        ]),
+                        html.Div([
+                            html.Label("קטגוריה", style={"fontSize": "13px", "display": "block", "marginBottom": "4px"}),
+                            dcc.Dropdown(
                                 id="filter-category",
-                                label="קטגוריה",
+                                options=[{"value": c, "label": c} for c in CATEGORIES],
                                 placeholder="הכל",
-                                data=[{"value": c, "label": c} for c in CATEGORIES],
-                                style={"width": 250},
+                                multi=True,
+                                style={"width": "250px"},
                             ),
-                            dmc.MultiSelect(
+                        ]),
+                        html.Div([
+                            html.Label("מקור", style={"fontSize": "13px", "display": "block", "marginBottom": "4px"}),
+                            dcc.Dropdown(
                                 id="filter-source",
-                                label="מקור",
+                                options=[{"value": k, "label": v} for k, v in SOURCES.items()],
                                 placeholder="הכל",
-                                data=[
-                                    {"value": k, "label": v}
-                                    for k, v in SOURCES.items()
-                                ],
-                                style={"width": 200},
+                                multi=True,
+                                style={"width": "200px"},
                             ),
-                            dmc.Checkbox(
+                        ]),
+                        html.Div([
+                            dcc.Checklist(
                                 id="filter-pending",
-                                label="ממתינים בלבד",
+                                options=[{"value": "pending", "label": "ממתינים בלבד"}],
+                                value=[],
+                                style={"marginBottom": "6px"},
                             ),
-                            dmc.Button(
-                                "נקה מסננים",
-                                id="btn-clear-filters",
-                                variant="subtle",
-                                size="sm",
-                            ),
-                        ],
-                    ),
-                ],
-            ),
+                        ]),
+                        html.Button(
+                            "נקה מסננים",
+                            id="btn-clear-filters",
+                            style={
+                                "padding": "8px 16px", "backgroundColor": "#f1f3f5",
+                                "border": "1px solid #dee2e6", "borderRadius": "4px",
+                                "cursor": "pointer", "fontSize": "13px",
+                            },
+                        ),
+                    ],
+                ),
+            ],
+        ),
 
-            # Transactions table
-            dmc.Paper(
-                p="md",
-                shadow="sm",
-                children=[
-                    dag.AgGrid(
-                        id="transactions-grid",
-                        columnDefs=_column_defs(),
-                        rowData=[],
-                        defaultColDef={
-                            "sortable": True,
-                            "filter": True,
-                            "resizable": True,
-                        },
-                        dashGridOptions={
-                            "enableRtl": True,
-                            "pagination": True,
-                            "paginationPageSize": 50,
-                            "rowSelection": "single",
-                            "animateRows": True,
-                        },
-                        style={"height": "600px"},
-                        getRowStyle={
-                            "styleConditions": [
-                                {
-                                    "condition": "params.data.needs_review === 1",
-                                    "style": {"backgroundColor": "#FFF9C4"},
-                                },
-                            ],
-                        },
-                    ),
-                ],
-            ),
-        ],
-    )
+        # Transactions table
+        html.Div(
+            style={
+                "backgroundColor": "white", "borderRadius": "8px", "padding": "16px",
+                "boxShadow": "0 1px 3px rgba(0,0,0,0.1)",
+            },
+            children=[
+                dag.AgGrid(
+                    id="transactions-grid",
+                    columnDefs=_column_defs(),
+                    rowData=[],
+                    defaultColDef={
+                        "sortable": True,
+                        "filter": True,
+                        "resizable": True,
+                    },
+                    dashGridOptions={
+                        "enableRtl": True,
+                        "pagination": True,
+                        "paginationPageSize": 50,
+                        "animateRows": True,
+                    },
+                    style={"height": "600px"},
+                    getRowStyle={
+                        "styleConditions": [
+                            {
+                                "condition": "params.data.needs_review === 1",
+                                "style": {"backgroundColor": "#FFF9C4"},
+                            },
+                        ],
+                    },
+                ),
+            ],
+        ),
+    ])
 
 
 def _column_defs():
@@ -104,12 +113,11 @@ def _column_defs():
             "field": "date",
             "headerName": "תאריך",
             "width": 120,
-            "valueFormatter": {"function": "d3.timeFormat('%d/%m/%Y')(new Date(params.value))"},
         },
         {
             "field": "merchant",
             "headerName": "בית עסק",
-            "width": 200,
+            "width": 220,
             "filter": "agTextColumnFilter",
         },
         {
@@ -117,7 +125,7 @@ def _column_defs():
             "headerName": "סכום (₪)",
             "width": 120,
             "type": "numericColumn",
-            "valueFormatter": {"function": "Number(params.value).toLocaleString('he-IL', {style: 'currency', currency: 'ILS'})"},
+            "valueFormatter": {"function": "Number(params.value).toLocaleString('he-IL', {minimumFractionDigits: 2})"},
         },
         {
             "field": "category",
@@ -131,23 +139,15 @@ def _column_defs():
             "field": "source",
             "headerName": "מקור",
             "width": 130,
-            "valueFormatter": {"function": _source_formatter()},
         },
         {
             "field": "payment_method",
             "headerName": "תשלום",
-            "width": 110,
-            "valueFormatter": {"function": _payment_formatter()},
-        },
-        {
-            "field": "installment_info",
-            "headerName": "תשלומים",
             "width": 100,
-            "valueGetter": {"function": _installment_getter()},
         },
         {
             "field": "needs_review",
-            "headerName": "לבדיקה",
+            "headerName": "סטטוס",
             "width": 80,
             "valueFormatter": {"function": "params.value === 1 ? '⚠️' : '✓'"},
         },
@@ -156,32 +156,3 @@ def _column_defs():
             "hide": True,
         },
     ]
-
-
-def _source_formatter():
-    return """
-    function(params) {
-        const map = {'visa-mizrahi': 'ויזה מזרחי', 'diners-el-al': 'דיינרס', 'max': 'מקס'};
-        return map[params.value] || params.value;
-    }
-    """
-
-
-def _payment_formatter():
-    return """
-    function(params) {
-        const map = {'regular': 'רגיל', 'installments': 'תשלומים', 'immediate_debit': 'מיידי'};
-        return map[params.value] || params.value;
-    }
-    """
-
-
-def _installment_getter():
-    return """
-    function(params) {
-        if (params.data.installment_number && params.data.installments_total) {
-            return params.data.installment_number + '/' + params.data.installments_total;
-        }
-        return '';
-    }
-    """

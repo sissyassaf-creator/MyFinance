@@ -43,8 +43,13 @@ class BaseParser(ABC):
         """Parse various date formats to ISO YYYY-MM-DD."""
         if pd.isna(date_str):
             return None
+        # Handle pandas Timestamp objects directly
+        if isinstance(date_str, pd.Timestamp):
+            return date_str.strftime('%Y-%m-%d')
         date_str = str(date_str).strip()
-        for fmt in ('%d/%m/%Y', '%d-%m-%Y', '%d.%m.%Y', '%Y-%m-%d'):
+        if not date_str or date_str == 'nan' or date_str == 'NaT':
+            return None
+        for fmt in ('%d/%m/%Y', '%d-%m-%Y', '%d.%m.%Y', '%Y-%m-%d', '%Y-%m-%d %H:%M:%S'):
             try:
                 return pd.to_datetime(date_str, format=fmt).strftime('%Y-%m-%d')
             except ValueError:

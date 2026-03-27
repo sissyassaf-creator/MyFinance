@@ -4,8 +4,7 @@ from datetime import datetime
 
 import dash
 import plotly.express as px
-from dash import Input, Output, State, callback_context, html, no_update
-import dash_mantine_components as dmc
+from dash import Input, Output, State, html, no_update
 
 from myfinance.config import CATEGORIES, SOURCES, UNRECOGNIZED_CATEGORY
 from myfinance.db import (
@@ -19,9 +18,20 @@ from myfinance.processing.categorizer import normalize_merchant
 
 
 def register_callbacks(app: dash.Dash):
-    """Register all callbacks on the app."""
 
-    # ── Sidebar stats (on load + after processing) ─────
+    # ── Tab content rendering ──────────────────────────
+    @app.callback(
+        Output("tab-content", "children"),
+        Input("main-tabs", "value"),
+    )
+    def render_tab(tab):
+        from myfinance.dashboard.tab_overview import overview_layout
+        from myfinance.dashboard.tab_transactions import transactions_layout
+        if tab == "transactions":
+            return transactions_layout()
+        return overview_layout()
+
+    # ── Sidebar stats ──────────────────────────────────
     @app.callback(
         [
             Output("stat-last-run", "children"),
@@ -59,19 +69,12 @@ def register_callbacks(app: dash.Dash):
         backup_db()
         result = run_pipeline()
 
-        alerts_text = ""
-        if result.get('savings_alerts'):
-            alerts_text = " | ".join(
-                a['description'] for a in result['savings_alerts'][:3]
-            )
-
-        return dmc.Notification(
-            title="עיבוד הושלם",
-            message=f"{result['new_transactions']} עסקאות חדשות, {result['duplicates_skipped']} כפילויות. {alerts_text}",
-            color="green",
+        return html.Div(
+            f"✓ {result['new_transactions']} עסקאות חדשות, {result['duplicates_skipped']} כפילויות",
+            style={"color": "green", "fontSize": "13px", "marginTop": "8px"},
         )
 
-    # ── Overview tab data ──────────────────────────────
+    # ── Overview tab ───────────────────────────────────
     @app.callback(
         [
             Output("stat-total-spend", "children"),
@@ -101,31 +104,20 @@ def register_callbacks(app: dash.Dash):
         txn_count = len(df)
         pending = df[df['needs_review'] == 1].shape[0]
 
-        # Pie chart by category
+        # Pie chart
         cat_totals = df.groupby('category')['amount_ils'].sum().reset_index()
-        cat_totals = cat_totals[cat_totals['category'] != UNRECOGNIZED_CATEGORY]
-        pie_fig = px.pie(
-            cat_totals, values='amount_ils', names='category',
-            hole=0.4,
-        )
+        pie_fig = px.pie(cat_totals, values='amount_ils', names='category', hole=0.4)
         pie_fig.update_layout(
-            font=dict(family="Assistant, Arial"),
-            margin=dict(t=20, b=20, l=20, r=20),
-            showlegend=True,
-            legend=dict(font=dict(size=11)),
+            font=dict(family="Arial"), margin=dict(t=10, b=10, l=10, r=10),
+            showlegend=True, legend=dict(font=dict(size=11)),
         )
 
-        # Bar chart by category
+        # Bar chart
         cat_sorted = cat_totals.sort_values('amount_ils', ascending=True)
-        bar_fig = px.bar(
-            cat_sorted, x='amount_ils', y='category', orientation='h',
-        )
+        bar_fig = px.bar(cat_sorted, x='amount_ils', y='category', orientation='h')
         bar_fig.update_layout(
-            font=dict(family="Assistant, Arial"),
-            margin=dict(t=20, b=20, l=20, r=80),
-            xaxis_title="סכום (₪)",
-            yaxis_title="",
-            showlegend=False,
+            font=dict(family="Arial"), margin=dict(t=10, b=10, l=10, r=80),
+            xaxis_title="סכום (₪)", yaxis_title="", showlegend=False,
         )
 
         # Top 5 merchants
@@ -137,31 +129,37 @@ def register_callbacks(app: dash.Dash):
             .reset_index()
         )
         top5_rows = [
-            dmc.Group(
-                justify="space-between",
+            html.Div(
+                style={"display": "flex", "justifyContent": "space-between",
+                       "padding": "6px 0", "borderBottom": "1px solid #f1f3f5"},
                 children=[
-                    dmc.Text(row['merchant'], size="sm"),
-                    dmc.Text(f"₪{row['sum']:,.0f} ({row['count']} עסקאות)", size="sm", c="dimmed"),
+                    html.Span(row['merchant'], style={"fontSize": "14px"}),
+                    html.Span(
+                        f"₪{row['sum']:,.0f} ({row['count']} עסקאות)",
+                        style={"fontSize": "14px", "color": "#888"},
+                    ),
                 ],
             )
             for _, row in top5.iterrows()
         ]
 
-        # Savings alerts
+        # Savings
         from myfinance.processing.savings import detect_savings
         alerts = detect_savings(transactions)
         if alerts:
             alert_cards = [
-                dmc.Alert(
-                    title=a['title'],
-                    children=a['description'],
-                    color="yellow",
-                    mb="xs",
+                html.Div(
+                    style={"backgroundColor": "#FFF9C4", "padding": "10px", "borderRadius": "6px",
+                           "marginBottom": "8px"},
+                    children=[
+                        html.Strong(a['title']),
+                        html.Span(f" — {a['description']}", style={"fontSize": "13px"}),
+                    ],
                 )
                 for a in alerts[:5]
             ]
         else:
-            alert_cards = [dmc.Text("אין הצעות חיסכון כרגע", c="dimmed")]
+            alert_cards = [html.P("אין הצעות חיסכון כרגע", style={"color": "#888"})]
 
         return (
             f"₪{total_spend:,.0f}",
@@ -175,7 +173,7 @@ def register_callbacks(app: dash.Dash):
 
     # ── Month filter options ───────────────────────────
     @app.callback(
-        Output("filter-month", "data"),
+        Output("filter-month", "options"),
         Input("main-tabs", "value"),
         Input("process-output", "children"),
     )
@@ -187,22 +185,21 @@ def register_callbacks(app: dash.Dash):
         conn.close()
         return [{"value": r['m'], "label": r['m']} for r in rows]
 
-    # ── Transactions table data ────────────────────────
+    # ── Transactions table ─────────────────────────────
     @app.callback(
         Output("transactions-grid", "rowData"),
         [
             Input("filter-month", "value"),
             Input("filter-category", "value"),
             Input("filter-source", "value"),
-            Input("filter-pending", "checked"),
+            Input("filter-pending", "value"),
             Input("process-output", "children"),
             Input("main-tabs", "value"),
         ],
     )
-    def update_transactions_table(month, categories, sources, pending_only, _process, _tab):
+    def update_transactions_table(month, categories, sources, pending_checks, _process, _tab):
         conn = get_connection()
 
-        # Build query with filters
         query = "SELECT * FROM transactions WHERE 1=1"
         params = []
 
@@ -217,7 +214,7 @@ def register_callbacks(app: dash.Dash):
             placeholders = ','.join(['?'] * len(sources))
             query += f" AND source IN ({placeholders})"
             params.extend(sources)
-        if pending_only:
+        if pending_checks and "pending" in pending_checks:
             query += " AND needs_review = 1"
 
         query += " ORDER BY date DESC"
@@ -232,13 +229,13 @@ def register_callbacks(app: dash.Dash):
             Output("filter-month", "value"),
             Output("filter-category", "value"),
             Output("filter-source", "value"),
-            Output("filter-pending", "checked"),
+            Output("filter-pending", "value"),
         ],
         Input("btn-clear-filters", "n_clicks"),
         prevent_initial_call=True,
     )
     def clear_filters(n_clicks):
-        return None, [], [], False
+        return None, [], [], []
 
     # ── Inline category edit ───────────────────────────
     @app.callback(
@@ -258,10 +255,8 @@ def register_callbacks(app: dash.Dash):
             return no_update
 
         conn = get_connection()
-        # Update the transaction
         update_transaction_category(conn, txn_id, new_category)
 
-        # Update merchant map with user confirmation
         merchant = data['data'].get('merchant', '')
         if merchant:
             normalized = normalize_merchant(merchant)
@@ -284,13 +279,5 @@ def register_callbacks(app: dash.Dash):
         month = datetime.now().strftime('%Y-%m')
         path = export_month(month)
         if path:
-            return dmc.Notification(
-                title="ייצוא הושלם",
-                message=f"נשמר ב: {path}",
-                color="green",
-            )
-        return dmc.Notification(
-            title="אין נתונים",
-            message=f"אין עסקאות לחודש {month}",
-            color="yellow",
-        )
+            return html.Div(f"✓ נשמר ב: {path.name}", style={"color": "green", "fontSize": "13px", "marginTop": "8px"})
+        return html.Div(f"אין נתונים לחודש {month}", style={"color": "orange", "fontSize": "13px", "marginTop": "8px"})

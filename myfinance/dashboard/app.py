@@ -1,8 +1,7 @@
 """Dash app factory with RTL Hebrew layout."""
 
 import dash
-import dash_mantine_components as dmc
-from dash import html
+from dash import dcc, html
 
 from myfinance.dashboard.callbacks import register_callbacks
 from myfinance.dashboard.sidebar import sidebar_layout
@@ -17,36 +16,57 @@ def create_app() -> dash.Dash:
         suppress_callback_exceptions=True,
     )
 
-    app.layout = dmc.MantineProvider(
-        theme={"fontFamily": "Assistant, Arial, sans-serif"},
+    app.layout = html.Div(
+        dir="rtl",
+        style={
+            "direction": "rtl",
+            "textAlign": "right",
+            "fontFamily": "Assistant, Arial, sans-serif",
+            "display": "flex",
+            "minHeight": "100vh",
+            "backgroundColor": "#f8f9fa",
+        },
         children=[
+            # Sidebar
             html.Div(
-                dir="rtl",
-                style={"direction": "rtl", "textAlign": "right"},
+                style={
+                    "width": "280px",
+                    "minWidth": "280px",
+                    "backgroundColor": "white",
+                    "borderLeft": "1px solid #dee2e6",
+                    "padding": "20px",
+                    "overflowY": "auto",
+                },
+                children=[sidebar_layout()],
+            ),
+            # Main content
+            html.Div(
+                style={
+                    "flex": "1",
+                    "padding": "24px",
+                    "overflowY": "auto",
+                },
                 children=[
-                    dmc.AppShell(
+                    dcc.Tabs(
+                        id="main-tabs",
+                        value="overview",
+                        style={"direction": "rtl"},
                         children=[
-                            dmc.AppShellNavbar(sidebar_layout()),
-                            dmc.AppShellMain(
-                                children=[
-                                    dmc.Tabs(
-                                        id="main-tabs",
-                                        value="overview",
-                                        children=[
-                                            dmc.TabsList([
-                                                dmc.TabsTab("סקירה כללית", value="overview"),
-                                                dmc.TabsTab("פירוט עסקאות", value="transactions"),
-                                            ]),
-                                            dmc.TabsPanel(overview_layout(), value="overview"),
-                                            dmc.TabsPanel(transactions_layout(), value="transactions"),
-                                        ],
-                                    ),
-                                ],
+                            dcc.Tab(
+                                label="סקירה כללית",
+                                value="overview",
+                                style={"fontFamily": "Assistant, Arial, sans-serif"},
+                                selected_style={"fontFamily": "Assistant, Arial, sans-serif", "fontWeight": "bold"},
+                            ),
+                            dcc.Tab(
+                                label="פירוט עסקאות",
+                                value="transactions",
+                                style={"fontFamily": "Assistant, Arial, sans-serif"},
+                                selected_style={"fontFamily": "Assistant, Arial, sans-serif", "fontWeight": "bold"},
                             ),
                         ],
-                        navbar={"width": 280, "breakpoint": "sm"},
-                        padding="md",
                     ),
+                    html.Div(id="tab-content", style={"marginTop": "16px"}),
                 ],
             ),
         ],
